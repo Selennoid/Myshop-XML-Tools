@@ -1,0 +1,6 @@
+DRIVER=SQL Server
+SERVER=127.0.0.1
+DATABASE=gmg_account
+Trusted_Connection=no
+UID=sa
+PWD=password
