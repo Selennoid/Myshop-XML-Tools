@@ -92,7 +92,6 @@ class Helper
         Helper() noexcept;
         SQLHENV hEnv = SQL_NULL_HENV;
         SQLHDBC hDbc = SQL_NULL_HDBC;
-        SQLHSTMT hStmt;
         SQLRETURN ret;
         std::string ltrim(std::string s);
         std::string rtrim(std::string s);

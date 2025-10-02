@@ -267,6 +267,12 @@ void gui::EndRender() noexcept
 void gui::AddLog(const char* msg) noexcept
 {
 	logBuffer.push_back(msg);
+	std::ofstream out("log.txt", std::ios::out | std::ios::app);
+	if (out.is_open())
+	{
+		out << msg << std::endl;
+	}
+	out.close();
 }
 
 void gui::Render() noexcept

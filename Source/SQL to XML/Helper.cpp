@@ -153,6 +153,7 @@ std::string Helper::sqlToString(SQLCHAR* buf, SQLLEN ind)
 std::vector<Helper::GoodsList> Helper::LoadGoodsList(int goods_code)
 {
     std::vector<GoodsList> result;
+    SQLHSTMT hStmt{};
     SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt);
     const char* query =
         "SELECT A.goods_name, B.item_index, B.item_count, B.item_class, "
@@ -162,28 +163,77 @@ std::vector<Helper::GoodsList> Helper::LoadGoodsList(int goods_code)
         "LEFT JOIN gmg_account.dbo.tbl_goods_list AS B ON B.item_index = A.goods_code "
         "WHERE A.goods_code = ?";
     SQLPrepareA(hStmt, (SQLCHAR*)query, SQL_NTS);
-    SQLBindParameter(hStmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG, SQL_INTEGER, 0, 0, &goods_code, 0, NULL);
-    if (SQLExecute(hStmt) == SQL_SUCCESS) 
+    SQLBindParameter(hStmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG, SQL_INTEGER, 0, 0, &goods_code, 0, nullptr);
+    auto retExec = SQLExecute(hStmt);
+    if (!SQL_SUCCEEDED(retExec))
     {
-        GoodsList gl{};
-        SQLCHAR goods_name[256];
-        SQLLEN ind_goods_name, ind;
-        SQLBindCol(hStmt, 1, SQL_C_CHAR, goods_name, sizeof(goods_name), &ind_goods_name);
-        SQLBindCol(hStmt, 2, SQL_C_SLONG, &gl.item_index, 0, &ind);
-        SQLBindCol(hStmt, 3, SQL_C_SLONG, &gl.item_count, 0, &ind);
-        SQLBindCol(hStmt, 4, SQL_C_SLONG, &gl.item_class, 0, &ind);
-        SQLBindCol(hStmt, 5, SQL_C_SLONG, &gl.preview_x, 0, &ind);
-        SQLBindCol(hStmt, 6, SQL_C_SLONG, &gl.preview_y, 0, &ind);
-        SQLBindCol(hStmt, 7, SQL_C_SLONG, &gl.preview_z, 0, &ind);
-        SQLBindCol(hStmt, 8, SQL_C_SLONG, &gl.preview_d, 0, &ind);
-        SQLBindCol(hStmt, 9, SQL_C_SLONG, &gl.parents_list_code, 0, &ind);
-        SQLBindCol(hStmt, 10, SQL_C_SLONG, &gl.goods_list_code, 0, &ind);
-        while (SQLFetch(hStmt) == SQL_SUCCESS) 
+        SQLCHAR state[6] = { 0 }, msg[1024] = { 0 };
+        SQLINTEGER nativeErr = 0; SQLSMALLINT msgLen = 0;
+        if (SQLGetDiagRecA(SQL_HANDLE_STMT, hStmt, 1, state, &nativeErr, msg, sizeof(msg), &msgLen) == SQL_SUCCESS)
         {
-            gl.goods_name = sqlToString(goods_name, ind_goods_name);
+            std::ostringstream oss;
+            oss << "SQLExecute failed in LoadGoodsList for goods_code=" << goods_code
+                << " SQLSTATE=" << state
+                << " nativeErr=" << nativeErr
+                << " msg=" << msg;
+            gui::AddLog(oss.str().c_str());
+        }
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        return result;
+    }
+    SQLCHAR goods_name[256] = { 0 };
+    SQLLEN ind_name = 0, ind = 0;
+    long item_index = 0, parents_list_code = 0, goods_list_code = 0;
+    short item_count = 0;
+    unsigned char item_class = 0;
+    short preview_x = 0, preview_y = 0, preview_z = 0, preview_d = 0;
+    SQLBindCol(hStmt,  1, SQL_C_CHAR, goods_name, sizeof(goods_name), &ind_name);
+    SQLBindCol(hStmt,  2, SQL_C_SLONG, &item_index, 0, &ind);
+    SQLBindCol(hStmt,  3, SQL_C_SSHORT, &item_count, 0, &ind);
+    SQLBindCol(hStmt,  4, SQL_C_UTINYINT, &item_class, 0, &ind);
+    SQLBindCol(hStmt,  5, SQL_C_SSHORT, &preview_x, 0, &ind);
+    SQLBindCol(hStmt,  6, SQL_C_SSHORT, &preview_y, 0, &ind);
+    SQLBindCol(hStmt,  7, SQL_C_SSHORT, &preview_z, 0, &ind);
+    SQLBindCol(hStmt,  8, SQL_C_SSHORT, &preview_d, 0, &ind);
+    SQLBindCol(hStmt,  9, SQL_C_SLONG, &parents_list_code, 0, &ind);
+    SQLBindCol(hStmt, 10, SQL_C_SLONG, &goods_list_code, 0, &ind);
+    while (true)
+    {
+        auto retFetch = SQLFetch(hStmt);
+        if (retFetch == SQL_NO_DATA) break;
+
+        if (SQL_SUCCEEDED(retFetch))
+        {
+            GoodsList gl{};
+            gl.goods_name = (ind_name != SQL_NULL_DATA) ? (char*)goods_name : "";
+            gl.item_index = item_index;
+            gl.item_count = item_count;
+            gl.item_class = item_class;
+            gl.preview_x = preview_x;
+            gl.preview_y = preview_y;
+            gl.preview_z = preview_z;
+            gl.preview_d = preview_d;
+            gl.parents_list_code = parents_list_code;
+            gl.goods_list_code = goods_list_code;
             result.push_back(gl);
         }
+        else
+        {
+            SQLCHAR state[6] = { 0 }, msg[1024] = { 0 };
+            SQLINTEGER nativeErr = 0; SQLSMALLINT msgLen = 0;
+            if (SQLGetDiagRecA(SQL_HANDLE_STMT, hStmt, 1, state, &nativeErr, msg, sizeof(msg), &msgLen) == SQL_SUCCESS)
+            {
+                std::ostringstream oss;
+                oss << "SQLFetch failed in LoadGoodsList for goods_code=" << goods_code
+                    << " SQLSTATE=" << state
+                    << " nativeErr=" << nativeErr
+                    << " msg=" << msg;
+                gui::AddLog(oss.str().c_str());
+            }
+            break;
+        }
     }
+    SQLCloseCursor(hStmt);
     SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
     return result;
 }
@@ -191,42 +241,99 @@ std::vector<Helper::GoodsList> Helper::LoadGoodsList(int goods_code)
 Helper::Goods Helper::LoadGoods(int goods_code)
 {
     Goods g{};
-    SQLHSTMT hStmt;
+    g.goods_code = goods_code;
+    SQLHSTMT hStmt{};
     SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt);
     const char* query =
-        "SELECT goods_code, goods_name, goods_desc, goods_set_count, goods_limit_use, "
-        "goods_limit_time, goods_cash_price, goods_shop_new, goods_shop_popular, "
-        "goods_category, goods_category0, goods_category1, goods_category2, "
-        "goods_char_level, goods_char_sex, goods_char_type, goods_issell "
-        "FROM gmg_account.dbo.tbl_goods WHERE goods_code = ?";
+        "SELECT A.goods_code, A.goods_name, A.goods_desc, A.goods_set_count, A.goods_limit_use, "
+        "A.goods_limit_time, B.goods_limit_price, A.goods_shop_new, A.goods_shop_popular, "
+        "A.goods_category, A.goods_category0, A.goods_category1, A.goods_category2, "
+        "A.goods_char_level, A.goods_char_sex, A.goods_char_type, A.goods_issell "
+        "FROM gmg_account.dbo.tbl_goods AS A "
+        "LEFT JOIN gmg_account.dbo.tbl_goods_limit AS B ON B.goods_code = A.goods_code "
+        "WHERE A.goods_code = ?";
     SQLPrepareA(hStmt, (SQLCHAR*)query, SQL_NTS);
-    SQLBindParameter(hStmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG, SQL_INTEGER, 0, 0, &goods_code, 0, NULL);
-    if (SQLExecute(hStmt) == SQL_SUCCESS && SQLFetch(hStmt) == SQL_SUCCESS) 
+    SQLBindParameter(hStmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG, SQL_INTEGER, 0, 0, &goods_code, 0, nullptr);
+    auto retExec = SQLExecute(hStmt);
+    if (!SQL_SUCCEEDED(retExec))
     {
-        SQLCHAR goods_name[256], goods_desc[512];
-        SQLLEN ind;
-        SQLGetData(hStmt, 1, SQL_C_SLONG, &g.goods_code, 0, &ind);
-        SQLGetData(hStmt, 2, SQL_C_CHAR, goods_name, sizeof(goods_name), &ind);
-        SQLGetData(hStmt, 3, SQL_C_CHAR, goods_desc, sizeof(goods_desc), &ind);
-        SQLGetData(hStmt, 4, SQL_C_SLONG, &g.goods_set_count, 0, &ind);
-        SQLGetData(hStmt, 5, SQL_C_SLONG, &g.goods_limit_use, 0, &ind);
-        SQLGetData(hStmt, 6, SQL_C_SLONG, &g.goods_limit_time, 0, &ind);
-        SQLGetData(hStmt, 7, SQL_C_DOUBLE, &g.goods_cash_price, 0, &ind);
-        SQLGetData(hStmt, 8, SQL_C_SLONG, &g.goods_shop_new, 0, &ind);
-        SQLGetData(hStmt, 9, SQL_C_SLONG, &g.goods_shop_popular, 0, &ind);
-        SQLGetData(hStmt, 10, SQL_C_SLONG, &g.goods_category, 0, &ind);
-        SQLGetData(hStmt, 11, SQL_C_SLONG, &g.goods_category0, 0, &ind);
-        SQLGetData(hStmt, 12, SQL_C_SLONG, &g.goods_category1, 0, &ind);
-        SQLGetData(hStmt, 13, SQL_C_SLONG, &g.goods_category2, 0, &ind);
-        SQLGetData(hStmt, 14, SQL_C_SLONG, &g.goods_char_level, 0, &ind);
-        SQLGetData(hStmt, 15, SQL_C_SLONG, &g.goods_char_sex, 0, &ind);
-        SQLGetData(hStmt, 16, SQL_C_SLONG, &g.goods_char_type, 0, &ind);
-        SQLGetData(hStmt, 17, SQL_C_SLONG, &g.goods_issell, 0, &ind);
-        g.goods_name = (char*)goods_name;
-        g.goods_desc = (char*)goods_desc;
-        g.list = LoadGoodsList(goods_code);
+        SQLCHAR state[6] = { 0 }, msg[1024] = { 0 };
+        SQLINTEGER nativeErr = 0;
+        SQLSMALLINT msgLen = 0;
+        if (SQLGetDiagRecA(SQL_HANDLE_STMT, hStmt, 1, state, &nativeErr, msg, sizeof(msg), &msgLen) == SQL_SUCCESS)
+        {
+            std::ostringstream oss;
+            oss << "SQLExecute failed in LoadGoods for goods_code=" << goods_code
+                << " SQLSTATE=" << state
+                << " nativeErr=" << nativeErr
+                << " msg=" << msg;
+            gui::AddLog(oss.str().c_str());
+        }
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        return g;
     }
+    SQLLEN ind_code = 0, ind_name = 0, ind_desc = 0, ind_tmp = 0;
+    long code = 0, set_count = 0, limit_use = 0, limit_time = 0, cash_price = 0;
+    long shop_new = 0, shop_popular = 0, cat = 0, cat0 = 0, cat1 = 0, cat2 = 0;
+    short char_level = 0, char_type = 0;
+    unsigned char char_sex = 0;
+    unsigned char isSell = 0;
+    SQLCHAR name[128] = { 0 }, desc[512] = { 0 };
+    SQLBindCol(hStmt, 1, SQL_C_SLONG, &code, 0, &ind_code);
+    SQLBindCol(hStmt, 2, SQL_C_CHAR, name, sizeof(name), &ind_name);
+    SQLBindCol(hStmt, 3, SQL_C_CHAR, desc, sizeof(desc), &ind_desc);
+    SQLBindCol(hStmt, 4, SQL_C_SLONG, &set_count, 0, &ind_tmp);
+    SQLBindCol(hStmt, 5, SQL_C_UTINYINT, &limit_use, 0, &ind_tmp);
+    SQLBindCol(hStmt, 6, SQL_C_UTINYINT, &limit_time, 0, &ind_tmp);
+    SQLBindCol(hStmt, 7, SQL_C_SLONG, &cash_price, 0, &ind_tmp);
+    SQLBindCol(hStmt, 8, SQL_C_UTINYINT, &shop_new, 0, &ind_tmp);
+    SQLBindCol(hStmt, 9, SQL_C_UTINYINT, &shop_popular, 0, &ind_tmp);
+    SQLBindCol(hStmt, 10, SQL_C_UTINYINT, &cat, 0, &ind_tmp);
+    SQLBindCol(hStmt, 11, SQL_C_UTINYINT, &cat0, 0, &ind_tmp);
+    SQLBindCol(hStmt, 12, SQL_C_UTINYINT, &cat1, 0, &ind_tmp);
+    SQLBindCol(hStmt, 13, SQL_C_UTINYINT, &cat2, 0, &ind_tmp);
+    SQLBindCol(hStmt, 14, SQL_C_SSHORT, &char_level, 0, &ind_tmp);
+    SQLBindCol(hStmt, 15, SQL_C_UTINYINT, &char_sex, 0, &ind_tmp);
+    SQLBindCol(hStmt, 16, SQL_C_SSHORT, &char_type, 0, &ind_tmp);
+    SQLBindCol(hStmt, 17, SQL_C_BIT, &isSell, 0, &ind_tmp);
+    auto retFetch = SQLFetch(hStmt);
+    if (SQL_SUCCEEDED(retFetch))
+    {
+        g.goods_code = (ind_code != SQL_NULL_DATA) ? code : 0;
+        g.goods_name = (ind_name != SQL_NULL_DATA) ? (char*)name : "";
+        g.goods_desc = (ind_desc != SQL_NULL_DATA) ? (char*)desc : "";
+        g.goods_set_count = set_count;
+        g.goods_limit_use = limit_use;
+        g.goods_limit_time = limit_time;
+        g.goods_cash_price = cash_price;
+        g.goods_shop_new = shop_new;
+        g.goods_shop_popular = shop_popular;
+        g.goods_category = cat;
+        g.goods_category0 = cat0;
+        g.goods_category1 = cat1;
+        g.goods_category2 = cat2;
+        g.goods_char_level = char_level;
+        g.goods_char_sex = char_sex;
+        g.goods_char_type = char_type;
+        g.goods_issell = isSell;
+    }
+    else if (retFetch != SQL_NO_DATA)
+    {
+        SQLCHAR state[6] = { 0 }, msg[1024] = { 0 };
+        SQLINTEGER nativeErr = 0; SQLSMALLINT msgLen = 0;
+        if (SQLGetDiagRecA(SQL_HANDLE_STMT, hStmt, 1, state, &nativeErr, msg, sizeof(msg), &msgLen) == SQL_SUCCESS)
+        {
+            std::ostringstream oss;
+            oss << "SQLFetch failed in LoadGoods for goods_code=" << goods_code
+                << " SQLSTATE=" << state
+                << " nativeErr=" << nativeErr
+                << " msg=" << msg;
+            gui::AddLog(oss.str().c_str());
+        }
+    }
+    SQLCloseCursor(hStmt);
     SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+    g.list = LoadGoodsList(goods_code);
     return g;
 }
 
@@ -339,6 +446,7 @@ void Helper::ExportAllGoods()
 {
     std::vector<Goods> characterItems;
     std::vector<Goods> myCampItems;
+    std::vector<int> codes;
     SQLHSTMT hStmt;
     SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt);
     const char* query =
@@ -352,7 +460,15 @@ void Helper::ExportAllGoods()
         gui::AddLog("Reading tbl_goods table...");
         while (SQLFetch(hStmt) == SQL_SUCCESS) 
         {
-            Goods g = LoadGoods(goods_code);
+            while (SQLFetch(hStmt) == SQL_SUCCESS) 
+            {
+                codes.push_back(goods_code);
+            }
+            SQLCloseCursor(hStmt);
+        }
+        for (int code : codes)
+        {
+            Goods g = LoadGoods(code);
             if (g.goods_code == 0) continue;
             if (g.goods_category == 0)
                 characterItems.push_back(g);

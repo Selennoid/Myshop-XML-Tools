@@ -10,7 +10,7 @@
   Main.cpp
   Gerando código
   Previous IPDB not found, fall back to full compilation.
-  All 2578 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  All 2631 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finalizada a geração de código
 mimalloc.lib(alloc-aligned.obj) : warning LNK4099: PDB 'mimalloc-lib.pdb' não foi encontrado 'mimalloc.lib(alloc-aligned.obj)' ou no 'C:\Users\Selene\Documents\GitHub\Myshop-XML-Tools\Output\mimalloc-lib.pdb'; vinculando objeto quando quando sem nenhuma informação de depuração
 mimalloc.lib(alloc.obj) : warning LNK4099: PDB 'mimalloc-lib.pdb' não foi encontrado 'mimalloc.lib(alloc.obj)' ou no 'C:\Users\Selene\Documents\GitHub\Myshop-XML-Tools\Output\mimalloc-lib.pdb'; vinculando objeto quando quando sem nenhuma informação de depuração
