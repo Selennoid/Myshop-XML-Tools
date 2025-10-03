@@ -156,12 +156,11 @@ std::vector<Helper::GoodsList> Helper::LoadGoodsList(int goods_code)
     SQLHSTMT hStmt{};
     SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt);
     const char* query =
-        "SELECT A.goods_name, B.item_index, B.item_count, B.item_class, "
-        "B.preview_x, B.preview_y, B.preview_z, B.preview_d, "
-        "B.parents_list_code, B.goods_list_code "
-        "FROM gmg_account.dbo.tbl_goods AS A "
-        "LEFT JOIN gmg_account.dbo.tbl_goods_list AS B ON B.item_index = A.goods_code "
-        "WHERE A.goods_code = ?";
+        "SELECT 'Item', item_index, item_count, item_class, "
+        "preview_x, preview_y, preview_z, preview_d, "
+        "parents_list_code, goods_list_code "
+        "FROM gmg_account.dbo.tbl_goods_list "
+        "WHERE item_index = ?";
     SQLPrepareA(hStmt, (SQLCHAR*)query, SQL_NTS);
     SQLBindParameter(hStmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG, SQL_INTEGER, 0, 0, &goods_code, 0, nullptr);
     auto retExec = SQLExecute(hStmt);
@@ -248,7 +247,7 @@ Helper::Goods Helper::LoadGoods(int goods_code)
         "SELECT A.goods_code, A.goods_name, A.goods_desc, A.goods_set_count, A.goods_limit_use, "
         "A.goods_limit_time, B.goods_limit_price, A.goods_shop_new, A.goods_shop_popular, "
         "A.goods_category, A.goods_category0, A.goods_category1, A.goods_category2, "
-        "A.goods_char_level, A.goods_char_sex, A.goods_char_type, A.goods_issell "
+        "A.goods_char_level, A.goods_char_sex, A.goods_char_type, A.goods_issell, A.goods_limit_desc "
         "FROM gmg_account.dbo.tbl_goods AS A "
         "LEFT JOIN gmg_account.dbo.tbl_goods_limit AS B ON B.goods_code = A.goods_code "
         "WHERE A.goods_code = ?";
@@ -272,22 +271,22 @@ Helper::Goods Helper::LoadGoods(int goods_code)
         SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
         return g;
     }
-    SQLLEN ind_code = 0, ind_name = 0, ind_desc = 0, ind_tmp = 0;
+    SQLLEN ind_code = 0, ind_name = 0, ind_desc = 0, ind_ldesc = 0, ind_tmp = 0;
     long code = 0, set_count = 0, limit_use = 0, limit_time = 0, cash_price = 0;
     long shop_new = 0, shop_popular = 0, cat = 0, cat0 = 0, cat1 = 0, cat2 = 0;
     short char_level = 0, char_type = 0;
     unsigned char char_sex = 0;
     unsigned char isSell = 0;
-    SQLCHAR name[128] = { 0 }, desc[512] = { 0 };
-    SQLBindCol(hStmt, 1, SQL_C_SLONG, &code, 0, &ind_code);
-    SQLBindCol(hStmt, 2, SQL_C_CHAR, name, sizeof(name), &ind_name);
-    SQLBindCol(hStmt, 3, SQL_C_CHAR, desc, sizeof(desc), &ind_desc);
-    SQLBindCol(hStmt, 4, SQL_C_SLONG, &set_count, 0, &ind_tmp);
-    SQLBindCol(hStmt, 5, SQL_C_UTINYINT, &limit_use, 0, &ind_tmp);
-    SQLBindCol(hStmt, 6, SQL_C_UTINYINT, &limit_time, 0, &ind_tmp);
-    SQLBindCol(hStmt, 7, SQL_C_SLONG, &cash_price, 0, &ind_tmp);
-    SQLBindCol(hStmt, 8, SQL_C_UTINYINT, &shop_new, 0, &ind_tmp);
-    SQLBindCol(hStmt, 9, SQL_C_UTINYINT, &shop_popular, 0, &ind_tmp);
+    SQLCHAR name[128] = { 0 }, desc[500] = { 0 }, limitDesc[500] = { 0 };
+    SQLBindCol(hStmt,  1, SQL_C_SLONG, &code, 0, &ind_code);
+    SQLBindCol(hStmt,  2, SQL_C_CHAR, name, sizeof(name), &ind_name);
+    SQLBindCol(hStmt,  3, SQL_C_CHAR, desc, sizeof(desc), &ind_desc);
+    SQLBindCol(hStmt,  4, SQL_C_SLONG, &set_count, 0, &ind_tmp);
+    SQLBindCol(hStmt,  5, SQL_C_UTINYINT, &limit_use, 0, &ind_tmp);
+    SQLBindCol(hStmt,  6, SQL_C_UTINYINT, &limit_time, 0, &ind_tmp);
+    SQLBindCol(hStmt,  7, SQL_C_SLONG, &cash_price, 0, &ind_tmp);
+    SQLBindCol(hStmt,  8, SQL_C_UTINYINT, &shop_new, 0, &ind_tmp);
+    SQLBindCol(hStmt,  9, SQL_C_UTINYINT, &shop_popular, 0, &ind_tmp);
     SQLBindCol(hStmt, 10, SQL_C_UTINYINT, &cat, 0, &ind_tmp);
     SQLBindCol(hStmt, 11, SQL_C_UTINYINT, &cat0, 0, &ind_tmp);
     SQLBindCol(hStmt, 12, SQL_C_UTINYINT, &cat1, 0, &ind_tmp);
@@ -296,6 +295,7 @@ Helper::Goods Helper::LoadGoods(int goods_code)
     SQLBindCol(hStmt, 15, SQL_C_UTINYINT, &char_sex, 0, &ind_tmp);
     SQLBindCol(hStmt, 16, SQL_C_SSHORT, &char_type, 0, &ind_tmp);
     SQLBindCol(hStmt, 17, SQL_C_BIT, &isSell, 0, &ind_tmp);
+    SQLBindCol(hStmt, 18, SQL_C_CHAR, limitDesc, sizeof(limitDesc), &ind_ldesc);
     auto retFetch = SQLFetch(hStmt);
     if (SQL_SUCCEEDED(retFetch))
     {
@@ -305,6 +305,7 @@ Helper::Goods Helper::LoadGoods(int goods_code)
         g.goods_set_count = set_count;
         g.goods_limit_use = limit_use;
         g.goods_limit_time = limit_time;
+        g.goods_limit_desc = (ind_ldesc != SQL_NULL_DATA) ? (char*)limitDesc : "";
         g.goods_cash_price = cash_price;
         g.goods_shop_new = shop_new;
         g.goods_shop_popular = shop_popular;

@@ -1,71 +1,12 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\Selene\\Documents\\GitHub\\Myshop-XML-Tools\\",
-  "Documents": [
-    {
-      "AbsoluteMoniker": "D:0:0:{B36FF2CB-80BF-4850-BFD8-0CD56DF0422B}|Source\\SQL to XML\\SQL to XML.vcxproj|C:\\Users\\Selene\\Documents\\GitHub\\Myshop-XML-Tools\\Source\\SQL to XML\\Helper.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{B36FF2CB-80BF-4850-BFD8-0CD56DF0422B}|Source\\SQL to XML\\SQL to XML.vcxproj|solutionrelative:Source\\SQL to XML\\Helper.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B36FF2CB-80BF-4850-BFD8-0CD56DF0422B}|Source\\SQL to XML\\SQL to XML.vcxproj|C:\\Users\\Selene\\Documents\\GitHub\\Myshop-XML-Tools\\Source\\SQL to XML\\Gui.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{B36FF2CB-80BF-4850-BFD8-0CD56DF0422B}|Source\\SQL to XML\\SQL to XML.vcxproj|solutionrelative:Source\\SQL to XML\\Gui.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B36FF2CB-80BF-4850-BFD8-0CD56DF0422B}|Source\\SQL to XML\\SQL to XML.vcxproj|C:\\Users\\Selene\\Documents\\GitHub\\Myshop-XML-Tools\\Source\\SQL to XML\\Helper.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{B36FF2CB-80BF-4850-BFD8-0CD56DF0422B}|Source\\SQL to XML\\SQL to XML.vcxproj|solutionrelative:Source\\SQL to XML\\Helper.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    }
-  ],
+  "Documents": [],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
-      "DocumentGroups": [
-        {
-          "DockedWidth": 200,
-          "SelectedChildIndex": 2,
-          "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Gui.cpp",
-              "DocumentMoniker": "C:\\Users\\Selene\\Documents\\GitHub\\Myshop-XML-Tools\\Source\\SQL to XML\\gui.cpp",
-              "RelativeDocumentMoniker": "Source\\SQL to XML\\gui.cpp",
-              "ToolTip": "C:\\Users\\Selene\\Documents\\GitHub\\Myshop-XML-Tools\\Source\\SQL to XML\\gui.cpp",
-              "RelativeToolTip": "Source\\SQL to XML\\gui.cpp",
-              "ViewState": "AgIAADEBAAAAAAAAAAAAAA0BAAA7AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-10-02T19:00:35.125Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "Helper.h",
-              "DocumentMoniker": "C:\\Users\\Selene\\Documents\\GitHub\\Myshop-XML-Tools\\Source\\SQL to XML\\Helper.h",
-              "RelativeDocumentMoniker": "Source\\SQL to XML\\Helper.h",
-              "ToolTip": "C:\\Users\\Selene\\Documents\\GitHub\\Myshop-XML-Tools\\Source\\SQL to XML\\Helper.h",
-              "RelativeToolTip": "Source\\SQL to XML\\Helper.h",
-              "ViewState": "AgIAAFIAAAAAAAAAAADwv10AAAAlAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-10-02T06:11:19.999Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Helper.cpp",
-              "DocumentMoniker": "C:\\Users\\Selene\\Documents\\GitHub\\Myshop-XML-Tools\\Source\\SQL to XML\\Helper.cpp",
-              "RelativeDocumentMoniker": "Source\\SQL to XML\\Helper.cpp",
-              "ToolTip": "C:\\Users\\Selene\\Documents\\GitHub\\Myshop-XML-Tools\\Source\\SQL to XML\\Helper.cpp",
-              "RelativeToolTip": "Source\\SQL to XML\\Helper.cpp",
-              "ViewState": "AgIAANEBAAAAAAAAAAAAwM0BAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-10-02T06:09:06.561Z",
-              "EditorCaption": ""
-            }
-          ]
-        }
-      ]
+      "DocumentGroups": []
     }
   ]
 }

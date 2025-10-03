@@ -54,6 +54,7 @@ class Helper
             int goods_set_count;
             int goods_limit_use;
             int goods_limit_time;
+            std::string goods_limit_desc;
             int goods_cash_price;
             int goods_shop_new;
             int goods_shop_popular;
@@ -75,6 +76,7 @@ class Helper
                 goods_set_count = 0;
                 goods_limit_use = 0;
                 goods_limit_time = 0;
+                goods_limit_desc = "";
                 goods_cash_price = 0;
                 goods_shop_new = 0;
                 goods_shop_popular = 0;
