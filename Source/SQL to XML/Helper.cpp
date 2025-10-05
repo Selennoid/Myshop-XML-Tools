@@ -443,6 +443,55 @@ void Helper::exportToXML(const std::vector<Helper::Goods>& characterItems, const
     out.close();
 }
 
+void Helper::exportToParamXML(const std::vector<Helper::Goods>& characterItems, const std::string& outputFile)
+{
+    rapidxml::xml_document<> doc;
+    auto* table = doc.allocate_node(rapidxml::node_element, "TABLE");
+    table->append_attribute(doc.allocate_attribute("name", "ItemParamSetCM2"));
+    table->append_attribute(doc.allocate_attribute("RowCount", doc.allocate_string(std::to_string(characterItems.size()).c_str())));
+    table->append_attribute(doc.allocate_attribute("TableInfoID", "1873"));
+    table->append_attribute(doc.allocate_attribute("FieldCnt", "2"));
+    doc.append_node(table);
+    {
+        auto* fi = doc.allocate_node(rapidxml::node_element, "FIELDINFO");
+        fi->append_attribute(doc.allocate_attribute("Name", "ID"));
+        fi->append_attribute(doc.allocate_attribute("IsKey", "1"));
+        fi->append_attribute(doc.allocate_attribute("DataType", "INT"));
+        table->append_node(fi);
+    }
+    {
+        auto* fi = doc.allocate_node(rapidxml::node_element, "FIELDINFO");
+        fi->append_attribute(doc.allocate_attribute("Name", "ProductCode"));
+        fi->append_attribute(doc.allocate_attribute("IsKey", "0"));
+        fi->append_attribute(doc.allocate_attribute("DataType", "INT"));
+        table->append_node(fi);
+    }
+    auto alloc_str = [&](const std::string& s) {
+        return doc.allocate_string(s.c_str());
+    };
+    for (const auto& g : characterItems)
+    {
+        auto code = std::to_string(g.goods_code);
+        auto* row = doc.allocate_node(rapidxml::node_element, "ROW");
+        auto* idNode = doc.allocate_node(rapidxml::node_element, "ID", alloc_str(code));
+        row->append_node(idNode);
+        auto* prodNode = doc.allocate_node(rapidxml::node_element, "ProductCode", alloc_str(code));
+        row->append_node(prodNode);
+        table->append_node(row);
+    }
+    std::ofstream out(outputFile, std::ios::binary);
+    if (out.is_open())
+    {
+        out << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
+        for (auto* node = doc.first_node(); node; node = node->next_sibling())
+        {
+            save_xml_node(out, node);
+        }
+        out.close();
+    }
+}
+
+
 void Helper::ExportAllGoods() 
 {
     std::vector<Goods> characterItems;
@@ -483,4 +532,6 @@ void Helper::ExportAllGoods()
     SQLFreeHandle(SQL_HANDLE_ENV, hEnv);
     gui::AddLog("Generating libcmgds_e.xml file...");
     exportToXML(characterItems, myCampItems, "libcmgds_e.xml");
+    gui::AddLog("Generating itemparamsetCM2.xml file...");
+    exportToParamXML(characterItems, "itemparamsetCM2.xml");
 }

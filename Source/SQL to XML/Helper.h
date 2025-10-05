@@ -105,6 +105,7 @@ class Helper
         std::vector<GoodsList> LoadGoodsList(int goods_code);
         Goods LoadGoods(int goods_code);
         void exportToXML(const std::vector<Goods>& characterItems, const std::vector<Goods>& myCampItems, const std::string& outputFile);
+        void exportToParamXML(const std::vector<Goods>& characterItems, const std::string& outputFile);
         void ExportAllGoods();
         void save_xml_node(std::ostream& out, rapidxml::xml_node<>* node, int indent = 0);
 };
